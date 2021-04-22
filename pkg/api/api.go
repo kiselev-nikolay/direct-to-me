@@ -112,7 +112,7 @@ func ConnectAPI(ginServer *gin.Engine, fs *storage.FireStoreStorage) {
 		data, _ := ctx.GetRawData()
 		fmt.Println(string(data))
 	})
-	ginServer.StaticFile("/", "./frontend/index.html")
-	ginServer.StaticFile("/logo.png", "./frontend/logo.png")
+	ginServer.StaticFile("/", "./assets/index.html")
+	ginServer.StaticFile("/logo.png", "./assets/logo.png")
 	server.RunServer(ginServer)
 }
