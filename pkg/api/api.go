@@ -1,61 +1,66 @@
-package main
+package api
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kiselev-nikolay/direct-to-me/pkg/plain_http"
 	"github.com/kiselev-nikolay/direct-to-me/pkg/server"
 	"github.com/kiselev-nikolay/direct-to-me/pkg/storage"
 )
 
-func main() {
-	ginServer := server.GetServer()
-	storage, err := storage.NewKVStorage(nil, 1*time.Minute)
-	defer storage.close()
-	if err != nil {
-		log.Fatal(err)
-	}
+func ConnectAPI(ginServer *gin.Engine, fs *storage.FireStoreStorage) {
 	ginServer.GET("/new", func(ctx *gin.Context) {
-		data := map[string]string{
-			"fromURI":         strings.TrimSpace(ctx.Query("from")),
-			"toURL":           strings.Trim(ctx.Query("to"), "/"),
-			"redirectAfter":   strings.TrimSpace(ctx.Query("after")),
-			"urlTemplate":     ctx.Query("urlTemplate"),
-			"methodTemplate":  ctx.Query("methodTemplate"),
-			"headersTemplate": ctx.Query("headersTemplate"),
-			"bodyTemplate":    ctx.Query("bodyTemplate"),
+		redirect := storage.Redirect{
+			FromURI:         strings.TrimSpace(ctx.Query("from")),
+			ToURL:           strings.Trim(ctx.Query("to"), "/"),
+			RedirectAfter:   strings.TrimSpace(ctx.Query("after")),
+			URLTemplate:     ctx.Query("urlTemplate"),
+			MethodTemplate:  ctx.Query("methodTemplate"),
+			HeadersTemplate: ctx.Query("headersTemplate"),
+			BodyTemplate:    ctx.Query("bodyTemplate"),
 		}
-		if data["toURL"] != "" {
-			_, err := plain_http.MakeHTTPTemplates(data)
-			if err != nil {
-				ctx.JSON(400, gin.H{
-					"status":   "bad template",
-					"accepted": err.Error(),
-				})
-			}
+		if redirect.ToURL != "" {
+			// FIXIT validate template
+			log.Print("FIXIT validate template")
 		}
-		storage.Set(data["fromURI"], data)
+		err := fs.SetRedirect(redirect.FromURI, &redirect)
+		if err != nil {
+			ctx.JSON(500, gin.H{
+				"status": "database unreachable",
+			})
+			return
+		}
 		ctx.JSON(200, gin.H{
 			"status":   "ok",
 			"accepted": ctx.Query("from"),
 		})
 	})
 	ginServer.GET("/list", func(ctx *gin.Context) {
+		redirects, err := fs.ListRedirects()
+		if err != nil {
+			ctx.JSON(500, gin.H{
+				"status": "database unreachable",
+			})
+			return
+		}
 		ctx.JSON(200, gin.H{
 			"status": "ok",
-			"keys":   storage.List(),
+			"keys":   redirects,
 		})
 	})
 	ginServer.Any("/f/:key", func(ctx *gin.Context) {
-		databaseRecord := storage.Get(ctx.Param("key"))
+		redirect, err := fs.GetRedirect(ctx.Param("key"))
+		if err != nil {
+			ctx.JSON(500, gin.H{
+				"status": "database unreachable",
+			})
+			return
+		}
 		data := make(map[string]interface{})
 		for k, v := range ctx.Request.URL.Query() {
 			if len(v) == 1 {
@@ -65,13 +70,6 @@ func main() {
 			}
 		}
 		var bodyData map[string]interface{}
-		err := ctx.ShouldBind(&bodyData)
-		if err != nil {
-			ctx.JSON(400, gin.H{
-				"status": "cannot read body. " + err.Error(),
-			})
-			return
-		}
 		for k, v := range bodyData {
 			data[k] = v
 		}
@@ -82,7 +80,7 @@ func main() {
 				data[k] = v
 			}
 		}
-		if databaseRecord["toURL"] != "" {
+		if redirect.ToURL != "" {
 			r, err := json.Marshal(data)
 			if err != nil {
 				ctx.JSON(400, gin.H{
@@ -90,41 +88,31 @@ func main() {
 				})
 				return
 			}
-			go http.Post(databaseRecord["toURL"], "application/json", bytes.NewBuffer(r))
+			go http.Post(redirect.ToURL, "application/json", bytes.NewBuffer(r))
 		} else {
-			templateMask, _ := plain_http.MakeHTTPTemplates(databaseRecord)
-			plainRequest, plainRequestURL, plainRequestBody, err := plain_http.BuildHTTP(templateMask, data)
+			req, err := processTemplate(redirect, &data)
 			if err != nil {
-				// TODO say about data was wrong
+				log.Print(err)
 				ctx.JSON(400, gin.H{
 					"status": "failed to process content",
 				})
 				return
 			}
 			go func() {
-				client := &http.Client{}
-				request, err := http.ReadRequest(bufio.NewReader(strings.NewReader(plainRequest)))
+				HTTPClient := http.Client{}
+				_, err := HTTPClient.Do(req)
 				if err != nil {
-					fmt.Println("sub request read error:", err)
-					return
+					log.Print(err)
 				}
-				newRequest, err := http.NewRequest(request.Method, plainRequestURL, strings.NewReader(plainRequestBody))
-				if err != nil {
-					fmt.Println("sub request go-read error:", err)
-					return
-				}
-				newRequest.Header = request.Header
-				client.Do(newRequest)
 			}()
-			ctx.Redirect(303, databaseRecord["redirectAfter"])
 		}
-		ctx.Redirect(303, databaseRecord["redirectAfter"])
+		ctx.Redirect(303, redirect.RedirectAfter)
 	})
 	ginServer.POST("/dev/print", func(ctx *gin.Context) {
 		data, _ := ctx.GetRawData()
 		fmt.Println(string(data))
 	})
-	ginServer.StaticFile("/", "../frontend/index.html")
-	ginServer.StaticFile("/logo.png", "../frontend/logo.png")
+	ginServer.StaticFile("/", "./frontend/index.html")
+	ginServer.StaticFile("/logo.png", "./frontend/logo.png")
 	server.RunServer(ginServer)
 }

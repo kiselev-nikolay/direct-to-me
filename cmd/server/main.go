@@ -1,14 +1,26 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
+	"github.com/kiselev-nikolay/direct-to-me/pkg/api"
+	"github.com/kiselev-nikolay/direct-to-me/pkg/conf"
 	"github.com/kiselev-nikolay/direct-to-me/pkg/server"
+	"github.com/kiselev-nikolay/direct-to-me/pkg/storage"
 )
 
 func main() {
-	server.Serve("127.0.0.1", "8080", func(method, url string) {
-		fmt.Println("method:", method)
-		fmt.Println("url:   ", url)
+	conf := conf.ReadConfig("./conf.yaml")
+	projectID := "decent-genius-311507"
+	fs := &storage.FireStoreStorage{}
+	err := fs.Connect(storage.FireStoreStorageConf{
+		ProjectID:       projectID,
+		CredentialsPath: conf.Google.Application.Credentials.Storage,
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	ginServer := server.GetServer()
+	api.ConnectAPI(ginServer, fs)
+	server.RunServer(ginServer)
 }
