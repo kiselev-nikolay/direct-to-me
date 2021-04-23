@@ -1,0 +1,58 @@
+{
+  "name": "direct-to-me2",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/kiselev-nikolay/direct-to-me.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kiselev-nikolay/direct-to-me/issues"
+  },
+  "homepage": "https://github.com/kiselev-nikolay/direct-to-me#readme",
+  "private": true,
+  "dependencies": {
+    "@chakra-ui/icons": "^1.0.11",
+    "@chakra-ui/react": "^1.5.2",
+    "@emotion/react": "^11.1.5",
+    "@emotion/styled": "^11.3.0",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.5.0",
+    "@testing-library/user-event": "^7.2.1",
+    "@types/jest": "^24.9.1",
+    "@types/node": "^12.20.10",
+    "@types/react": "^16.14.5",
+    "@types/react-dom": "^16.9.12",
+    "framer-motion": "^4.1.8",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-scripts": "4.0.3",
+    "react-transition-group": "^4.4.1",
+    "styletron-engine-atomic": "^1.4.7",
+    "styletron-react": "^6.0.1"
+  },
+  "scripts": {
+    "start": "webpack --mode=development -w",
+    "build": "webpack --mode=production"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "ts-loader": "^9.1.0",
+    "typescript": "^4.2.4",
+    "webpack": "^5.35.0",
+    "webpack-cli": "^4.6.0"
+  }
+}
