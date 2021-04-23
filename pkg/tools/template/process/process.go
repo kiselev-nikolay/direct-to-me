@@ -1,4 +1,4 @@
-package api
+package process
 
 import (
 	"bufio"
@@ -25,7 +25,7 @@ func processTemplatePart(t string, data *map[string]interface{}) (string, error)
 	return b.String(), nil
 }
 
-func processTemplate(r *storage.Redirect, data *map[string]interface{}) (*http.Request, error) {
+func ProcessTemplate(r *storage.Redirect, data *map[string]interface{}) (*http.Request, error) {
 	method, err := processTemplatePart(r.MethodTemplate, data)
 	if err != nil {
 		return nil, errors.New("Wrong template for Method: " + err.Error())

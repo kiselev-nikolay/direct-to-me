@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetServer return server
 func GetServer() *gin.Engine {
 	r := gin.Default()
 
@@ -18,13 +17,12 @@ func GetServer() *gin.Engine {
 		c.String(http.StatusOK, "pong")
 	})
 	r.GET("/favicon.ico", func(c *gin.Context) {
-		c.String(http.StatusOK, "")
+		c.String(http.StatusNotFound, "Chrome why?")
 	})
 
 	return r
 }
 
-// RunServer run server
 func RunServer(r *gin.Engine) {
 	var serverWaitGroup sync.WaitGroup
 	var production bool
