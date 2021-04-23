@@ -28,7 +28,7 @@ interface NavigationProps {
 let Navigation = (props: NavigationProps) => {
   return (
     <Center>
-      <Box m="5" borderWidth="1px" borderRadius="lg" overflow="hidden">
+      <Box m="2rem" borderWidth="1px" borderRadius="lg" overflow="hidden">
         <Image mx="25%" my="1rem" w="50%" src="/static/logo.png" alt="" />
         <Box m="1rem" flex="1" textAlign="left">
           <Heading mx=".5rem" as="h4" size="md">Direct to me</Heading>
@@ -37,7 +37,10 @@ let Navigation = (props: NavigationProps) => {
             <NavLink title="Statistics" />
           </div>
           <div onClick={() => { props.setPage(1); }}>
-            <NavLink title="Statistics1" />
+            <NavLink title="List redirects" />
+          </div>
+          <div onClick={() => { props.setPage(2); }}>
+            <NavLink title="New redirect" />
           </div>
           <Link mx=".5rem" href="https://nikolai.works" isExternal>
             Copyright <ExternalLinkIcon mx="2px" mt="-3px" />

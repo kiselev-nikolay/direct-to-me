@@ -6,9 +6,9 @@ import {
 } from '@chakra-ui/react';
 
 import Navigation from './Navigation';
+import Pages from './Pages';
 
-interface AppProps {
-}
+interface AppProps { }
 interface AppState {
   page: number;
 }
@@ -32,11 +32,10 @@ class App extends React.Component<AppProps, AppState> {
         <GridItem colSpan={1}>
           <Navigation page={this.state.page} setPage={(n: number) => this.setPage(n)}></Navigation>
         </GridItem>
-        <GridItem colSpan={4} bg="papayawhip">
-          {this.state.page === 0 && <h1>Hey</h1>}
-          {this.state.page === 1 && <h1>He1</h1>}
+        <GridItem colSpan={4}>
+          <Pages page={this.state.page} />
         </GridItem>
-      </Grid>
+      </Grid >
     );
   }
 }
