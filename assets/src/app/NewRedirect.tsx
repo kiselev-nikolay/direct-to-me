@@ -4,22 +4,42 @@ import { QuestionIcon } from '@chakra-ui/icons';
 import {
   Box,
   Button,
-  Flex,
+  ButtonGroup,
+  Code,
+  Divider,
   FormControl,
   FormLabel,
   Input,
+  ListItem,
+  OrderedList,
   Popover,
   PopoverArrow,
   PopoverBody,
-  PopoverCloseButton,
   PopoverContent,
   PopoverTrigger,
   Switch,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
   Textarea,
 } from '@chakra-ui/react';
 
+let ifSaved = (key: string, defaultValue: any) => {
+  let rawSaved = localStorage.getItem('NewRedirectFrom');
+  if (rawSaved !== null && rawSaved !== undefined) {
+    let saved: any = JSON.parse(rawSaved);
+    if (saved !== null && saved !== undefined) {
+      return saved[key] || defaultValue;
+    }
+  }
+  return defaultValue;
+};
+
 interface LabelWithHelpProps {
   title: string;
+  placeholder?: string;
   children: React.ReactNode;
 }
 function LabelWithHelp(props: LabelWithHelpProps) {
@@ -33,18 +53,46 @@ function LabelWithHelp(props: LabelWithHelpProps) {
       </FormLabel>
       <PopoverContent mx="10px">
         <PopoverArrow />
-        <PopoverCloseButton />
         <PopoverBody>{props.children}</PopoverBody>
       </PopoverContent>
     </Popover>
   );
 }
 
-interface ControlProps {
+interface TextControlProps {
   title: string;
-  doc: string;
+  doc: string | React.ReactNode;
   name: string;
+  value?: string;
+  placeholder?: string;
   on: (name: string, e: any) => void;
+}
+function LineControl(props: TextControlProps) {
+  return (<>
+    <FormControl mb="1rem">
+      <LabelWithHelp title={props.title}>{props.doc}</LabelWithHelp>
+      <Input name={props.name} placeholder={props.placeholder} value={props.value} onChange={e => props.on(props.name, e)} />
+    </FormControl>
+  </>);
+}
+function AreaControl(props: TextControlProps) {
+  return (<>
+    <FormControl mb="1rem">
+      <LabelWithHelp title={props.title}>{props.doc}</LabelWithHelp>
+      <Textarea name={props.name} placeholder={props.placeholder} value={props.value} onChange={e => props.on(props.name, e)} resize="vertical" />
+    </FormControl>
+  </>);
+}
+interface BoolControlProps extends TextControlProps {
+  checked?: boolean;
+}
+function SwitchControl(props: BoolControlProps) {
+  return (<>
+    <FormControl display="flex" alignItems="center" mb="1rem">
+      <LabelWithHelp title={props.title}>{props.doc}</LabelWithHelp>
+      <Switch name={props.name} defaultChecked={props.checked} onChange={e => props.on(props.name, e)} />
+    </FormControl>
+  </>);
 }
 
 interface NewRedirectFromProps { }
@@ -56,97 +104,132 @@ interface NewRedirectFromState {
   MethodTemplate: string;
   HeadersTemplate: string;
   BodyTemplate: string;
-  AdvancedMode: boolean;
+
+  advancedMode: boolean;
+  step: number;
 }
 class NewRedirectFrom extends React.Component<NewRedirectFromProps, NewRedirectFromState> {
   constructor(props: NewRedirectFromProps) {
     super(props);
     this.state = {
-      FromURI: localStorage.getItem('FromURI') || '',
-      ToURL: localStorage.getItem('ToURL') || '',
-      RedirectAfter: localStorage.getItem('RedirectAfter') || '',
-      URLTemplate: localStorage.getItem('URLTemplate') || '',
-      MethodTemplate: localStorage.getItem('MethodTemplate') || '',
-      HeadersTemplate: localStorage.getItem('HeadersTemplate') || '',
-      BodyTemplate: localStorage.getItem('BodyTemplate') || '',
-      AdvancedMode: localStorage.getItem('AdvancedMode') === 'true' || false,
+      FromURI: ifSaved('FromURI', ''),
+      ToURL: ifSaved('ToURL', ''),
+      RedirectAfter: ifSaved('RedirectAfter', ''),
+      URLTemplate: ifSaved('URLTemplate', ''),
+      MethodTemplate: ifSaved('MethodTemplate', ''),
+      HeadersTemplate: ifSaved('HeadersTemplate', ''),
+      BodyTemplate: ifSaved('BodyTemplate', ''),
+      advancedMode: ifSaved('advancedMode', false),
+      step: 0,
     };
   }
   onChange(name: string, e: any) {
     let newState: any = {};
     newState[name] = e.target.value;
     this.setState(newState);
+    localStorage.setItem("NewRedirectFrom", JSON.stringify(this.state));
     e.preventDefault();
   }
   onSwitch(name: string, e: any) {
     let newState: any = {};
     newState[name] = e.target.checked;
     this.setState(newState);
+    localStorage.setItem("NewRedirectFrom", JSON.stringify(this.state));
     e.preventDefault();
   }
   onSubmit(e: any) {
+    localStorage.removeItem("NewRedirectFrom");
     console.log(this.state);
     e.preventDefault();
   }
+  nextStep() {
+    this.setState({ step: this.state.step + 1 });
+  }
+  backStep() {
+    this.setState({ step: this.state.step - 1 });
+  }
   render() {
-    function LineControl(props: ControlProps) {
-      return (<>
-        <FormControl mb="1rem">
-          <LabelWithHelp title={props.title}>{props.doc}</LabelWithHelp>
-          <Input name={props.name} onChange={e => props.on(props.name, e)} />
-        </FormControl>
-      </>);
-    }
-    function AreaControl(props: ControlProps) {
-      return (<>
-        <FormControl mb="1rem">
-          <LabelWithHelp title={props.title}>{props.doc}</LabelWithHelp>
-          <Textarea name={props.name} onChange={e => props.on(props.name, e)} />
-        </FormControl>
-      </>);
-    }
-    function SwitchControl(props: ControlProps) {
-      return (<>
-        <FormControl display="flex" alignItems="center" mb="1rem">
-          <LabelWithHelp title={props.title}>{props.doc}</LabelWithHelp>
-          <Switch onChange={e => props.on(props.name, e)} />
-        </FormControl>
-      </>);
-    }
     return (
-      <>
-        <Flex>
-          <Box flex="1">
-            <Box w="100%" pr="1rem">
-              <LineControl name="FromURI" title="From URI" doc=""
+      <Tabs isFitted index={this.state.step}>
+        <TabList>
+          <Tab isDisabled={this.state.step < 0}>Step 1: Redirect</Tab>
+          <Tab isDisabled={this.state.step < 1}>Step 2: Background send</Tab>
+          <Tab isDisabled={this.state.step < 2}>Step 3: Save</Tab>
+        </TabList>
+        <TabPanels mt="2rem">
+          <TabPanel>
+            <Box w="100%">
+              <LineControl name="FromURI" value={this.state.FromURI}
+                title="From URI" placeholder="to-my-site" doc={<>
+                  URI used for that redirect. As example redirect with from URI <Code>to-my-site</Code> can be accessed from
+                  <Code>{location.origin + "/to-my-site"}</Code>
+                </>}
                 on={(name, e) => this.onChange(name, e)} />
-              <LineControl name="RedirectAfter" title="Redirect after" doc=""
+              <LineControl name="RedirectAfter" value={this.state.RedirectAfter}
+                title="Redirect after" placeholder="https://direct-to-me.com/buy?from=to-my-site" doc="URL to redirect after background data send"
                 on={(name, e) => this.onChange(name, e)} />
+              <ButtonGroup spacing="3">
+                <Button colorScheme="green" onClick={e => this.nextStep()}>Next Step</Button>
+              </ButtonGroup>
             </Box>
-          </Box>
-          <Box flex="1">
-            <Box w="100%" pl="1rem">
-              {this.state.AdvancedMode ? <>
-                <LineControl name="URLTemplate" title="URL template" doc=""
+          </TabPanel>
+          <TabPanel>
+            <Box w="100%">
+              <SwitchControl name="advancedMode" checked={this.state.advancedMode}
+                title="Advanced mode" doc={<>
+                  Toggle advanced mode.
+                  <OrderedList>
+                    <ListItem>Simple mode: Just send data in body as JSON object to webhook</ListItem>
+                    <ListItem>Advanced mode: Template entire HTTP request, URL, Method, Headers, Body</ListItem>
+                  </OrderedList>
+                </>}
+                on={(name, e) => this.onSwitch(name, e)} />
+              <Divider mb="2rem" />
+              {this.state.advancedMode ? <>
+                <LineControl name="URLTemplate" value={this.state.URLTemplate}
+                  title="URL template" placeholder="https://hooks.slack.com/services/T{{secrets.TID}}/B{{secrets.BID}}" doc="Template for URL"
                   on={(name, e) => this.onChange(name, e)} />
-                <LineControl name="MethodTemplate" title="Method template" doc=""
+                <LineControl name="MethodTemplate" value={this.state.MethodTemplate}
+                  title="Method template" placeholder="POST" doc="Template for method. You can set it as static 'GET', 'POST' or any"
                   on={(name, e) => this.onChange(name, e)} />
-                <AreaControl name="HeadersTemplate" title="Headers template" doc=""
+                <AreaControl name="HeadersTemplate" value={this.state.HeadersTemplate}
+                  title="Headers template" placeholder={"Authorization: {{secrets.Token}}\nX-Trace-Id: {{data.trace_id}}\nContent-Type: text/xml"} doc="Template for request headers"
                   on={(name, e) => this.onChange(name, e)} />
-                <AreaControl name="BodyTemplate" title="Body template" doc=""
+                <AreaControl name="BodyTemplate" value={this.state.BodyTemplate}
+                  title="Body template" placeholder={'<?xml version="1.0" encoding="UTF-8"?>\n<root>\n\t<text>New lead! Email: {{data.lead_email}}</text>\n</root>'} doc="Template for request body"
                   on={(name, e) => this.onChange(name, e)} />
               </> : <>
-                <LineControl name="ToURL" title="Send JSON to URL in background" doc=""
+                <LineControl name="ToURL" value={this.state.ToURL}
+                  title="Send JSON to URL in background" placeholder="https://hooks.slack.com/services/T12345678/B12345678" doc="Specify full URL where to send the data. It can be any API endpoint, webhook, or postback"
                   on={(name, e) => this.onChange(name, e)} />
-              </>
-              }
+              </>}
+              <ButtonGroup spacing="3">
+                <Button onClick={e => this.backStep()}>Previous Step</Button>
+                <Button colorScheme="green" onClick={e => this.nextStep()}>Next Step</Button>
+              </ButtonGroup>
             </Box>
-          </Box>
-        </Flex>
-        <SwitchControl name="AdvancedMode" title="Advanced mode" doc=""
-          on={(name, e) => this.onSwitch(name, e)} />
-        <Button colorScheme="green" onClick={e => this.onSubmit(e)}>Submit</Button>
-      </>
+          </TabPanel>
+          <TabPanel>
+            <Box w="100%">
+              <p>FromURI: {this.state.FromURI}</p>
+              <p>RedirectAfter: {this.state.RedirectAfter}</p>
+              {this.state.advancedMode ? <>
+                <p>URLTemplate: {this.state.URLTemplate}</p>
+                <p>MethodTemplate: {this.state.MethodTemplate}</p>
+                <p>HeadersTemplate: {this.state.HeadersTemplate}</p>
+                <p>BodyTemplate: {this.state.BodyTemplate}</p>
+              </> : <>
+                <p>ToURL: {this.state.ToURL}</p>
+              </>}
+              <Divider my="1rem" />
+              <ButtonGroup spacing="3">
+                <Button onClick={e => this.backStep()}>Previous Step</Button>
+                <Button colorScheme="green" onClick={e => this.onSubmit(e)}>Submit</Button>
+              </ButtonGroup>
+            </Box>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     );
   }
 }
