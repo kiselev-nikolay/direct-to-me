@@ -9,6 +9,7 @@ import {
   Divider,
   FormControl,
   FormLabel,
+  Heading,
   Input,
   ListItem,
   OrderedList,
@@ -23,6 +24,7 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
+  Tag,
   Textarea,
 } from '@chakra-ui/react';
 
@@ -92,6 +94,28 @@ function SwitchControl(props: BoolControlProps) {
       <LabelWithHelp title={props.title}>{props.doc}</LabelWithHelp>
       <Switch name={props.name} defaultChecked={props.checked} onChange={e => props.on(props.name, e)} />
     </FormControl>
+  </>);
+}
+
+interface DisplayTemplateProps {
+  v: string;
+};
+function DisplayTemplate(props: DisplayTemplateProps) {
+  let text: Array<React.ReactNode> = [];
+  const regex = /{{(\s+)?(.+?)(\s+)?}}/gm;
+  let m;
+  let last = 0;
+  while ((m = regex.exec(props.v)) !== null) {
+    if (m.index === regex.lastIndex) {
+      regex.lastIndex++;
+    }
+    text.push(<span key={text.length}>{props.v.slice(last, m.index)}</span>);
+    last = m.index + m[0].length;
+    text.push(<Tag key={text.length} variant="subtle" colorScheme="cyan">{m[2]}</Tag>);
+  }
+  text.push(<span key={text.length}>{props.v.slice(last, props.v.length)}</span>);
+  return (<>
+    <span style={{ whiteSpace: "pre" }}>{text}</span>
   </>);
 }
 
@@ -211,15 +235,22 @@ class NewRedirectFrom extends React.Component<NewRedirectFromProps, NewRedirectF
           </TabPanel>
           <TabPanel>
             <Box w="100%">
-              <p>FromURI: {this.state.FromURI}</p>
-              <p>RedirectAfter: {this.state.RedirectAfter}</p>
+              <Heading as="h4" size="md">FromURI:</Heading>
+              <DisplayTemplate v={this.state.FromURI} />
+              <Heading as="h4" size="md">RedirectAfter:</Heading>
+              <DisplayTemplate v={this.state.RedirectAfter} />
               {this.state.advancedMode ? <>
-                <p>URLTemplate: {this.state.URLTemplate}</p>
-                <p>MethodTemplate: {this.state.MethodTemplate}</p>
-                <p>HeadersTemplate: {this.state.HeadersTemplate}</p>
-                <p>BodyTemplate: {this.state.BodyTemplate}</p>
+                <Heading as="h4" size="md">URLTemplate:</Heading>
+                <DisplayTemplate v={this.state.URLTemplate} />
+                <Heading as="h4" size="md">MethodTemplate:</Heading>
+                <DisplayTemplate v={this.state.MethodTemplate} />
+                <Heading as="h4" size="md">HeadersTemplate:</Heading>
+                <DisplayTemplate v={this.state.HeadersTemplate} />
+                <Heading as="h4" size="md">BodyTemplate:</Heading>
+                <DisplayTemplate v={this.state.BodyTemplate} />
               </> : <>
-                <p>ToURL: {this.state.ToURL}</p>
+                <Heading as="h4" size="md">ToURL:</Heading>
+                <DisplayTemplate v={this.state.ToURL} />
               </>}
               <Divider my="1rem" />
               <ButtonGroup spacing="3">
