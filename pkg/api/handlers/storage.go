@@ -7,7 +7,7 @@ import (
 	"github.com/kiselev-nikolay/direct-to-me/pkg/storage"
 )
 
-func MakeNewRedirectHandler(fs *storage.FireStoreStorage) func(ctx *gin.Context) {
+func MakeNewRedirectHandler(strg storage.Storage) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
 		redirect := storage.Redirect{}
 		ctx.Bind(&redirect)
@@ -15,8 +15,9 @@ func MakeNewRedirectHandler(fs *storage.FireStoreStorage) func(ctx *gin.Context)
 			// FIXIT validate template
 			log.Print("FIXIT validate template")
 		}
-		err := fs.SetRedirect(redirect.FromURI, &redirect)
+		err := strg.SetRedirect(redirect.FromURI, &redirect)
 		if err != nil {
+			log.Println(err)
 			ctx.JSON(500, gin.H{
 				"status": "database unreachable",
 			})
@@ -29,10 +30,18 @@ func MakeNewRedirectHandler(fs *storage.FireStoreStorage) func(ctx *gin.Context)
 	}
 }
 
-func MakeListRedirectsHandler(fs *storage.FireStoreStorage) func(ctx *gin.Context) {
+func MakeListRedirectsHandler(strg storage.Storage) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		redirects, err := fs.ListRedirects()
+		redirects, err := strg.ListRedirects()
 		if err != nil {
+			if storage.IsNotFoundError(err) {
+				ctx.JSON(200, gin.H{
+					"status":    "ok",
+					"redirects": []bool{},
+				})
+				return
+			}
+			log.Println(err)
 			ctx.JSON(500, gin.H{
 				"status": "database unreachable",
 			})

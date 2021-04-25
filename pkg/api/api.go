@@ -7,13 +7,13 @@ import (
 	"github.com/kiselev-nikolay/direct-to-me/pkg/storage"
 )
 
-func ConnectAPI(ginServer *gin.Engine, fs *storage.FireStoreStorage) {
-	ginServer.POST("/api/new", handlers.MakeNewRedirectHandler(fs))
-	ginServer.GET("/api/list", handlers.MakeListRedirectsHandler(fs))
-	ginServer.POST("/dev/print", handlers.MakeEchoHandler(fs))
+func ConnectAPI(ginServer *gin.Engine, strg storage.Storage) {
+	ginServer.POST("/api/new", handlers.MakeNewRedirectHandler(strg))
+	ginServer.GET("/api/list", handlers.MakeListRedirectsHandler(strg))
+	ginServer.POST("/dev/print", handlers.MakeEchoHandler(strg))
 	ginServer.StaticFile("/", "./assets/public/index.html")
 	ginServer.Static("/static", "./assets/public/")
-	redirectHandler := handlers.MakeRedirectHandler(fs)
+	redirectHandler := handlers.MakeRedirectHandler(strg)
 	ginServer.NoMethod(redirectHandler)
 	ginServer.NoRoute(redirectHandler)
 	server.RunServer(ginServer)
