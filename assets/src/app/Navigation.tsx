@@ -10,6 +10,8 @@ import {
   Link,
 } from '@chakra-ui/react';
 
+import pages from './pagesIndex';
+
 interface NavLinkProps {
   title: string;
 }
@@ -26,6 +28,10 @@ interface NavigationProps {
 }
 
 let Navigation = (props: NavigationProps) => {
+  let sp = (page: string) => {
+    localStorage.setItem("page", page);
+    props.setPage(pages.indexOf(page));
+  };
   return (
     <Center>
       <Box m="2rem" borderWidth="1px" borderRadius="lg" overflow="hidden">
@@ -33,13 +39,13 @@ let Navigation = (props: NavigationProps) => {
         <Box m="1rem" flex="1" textAlign="left">
           <Heading mx=".5rem" as="h4" size="md">Direct to me</Heading>
           <Divider my=".5rem" />
-          <div onClick={() => { props.setPage(0); }}>
+          <div onClick={() => { sp("index"); }}>
             <NavLink title="Statistics" />
           </div>
-          <div onClick={() => { props.setPage(1); }}>
+          <div onClick={() => { sp("listRedirects"); }}>
             <NavLink title="List redirects" />
           </div>
-          <div onClick={() => { props.setPage(2); }}>
+          <div onClick={() => { sp("newRedirect"); }}>
             <NavLink title="New redirect" />
           </div>
           <Link mx=".5rem" href="https://nikolai.works" isExternal>

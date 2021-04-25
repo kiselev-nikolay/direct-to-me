@@ -123,16 +123,6 @@ func IsNotFoundError(err error) bool {
 	return status.Code(err) == codes.NotFound
 }
 
-type Redirect struct {
-	FromURI         string
-	ToURL           string
-	RedirectAfter   string
-	URLTemplate     string
-	MethodTemplate  string
-	HeadersTemplate string
-	BodyTemplate    string
-}
-
 func (fs *FireStoreStorage) SetRedirect(key string, value *Redirect) error {
 	return fs.set("Redirect", key, value)
 }

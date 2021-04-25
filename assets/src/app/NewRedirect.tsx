@@ -9,7 +9,6 @@ import {
   Divider,
   FormControl,
   FormLabel,
-  Heading,
   Input,
   ListItem,
   OrderedList,
@@ -24,9 +23,11 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
-  Tag,
   Textarea,
 } from '@chakra-ui/react';
+
+import { Redirect } from './API/Redirect';
+import RedirectUI from './ui/Redirect';
 
 let ifSaved = (key: string, defaultValue: any) => {
   let rawSaved = localStorage.getItem('NewRedirectFrom');
@@ -97,28 +98,6 @@ function SwitchControl(props: BoolControlProps) {
   </>);
 }
 
-interface DisplayTemplateProps {
-  v: string;
-};
-function DisplayTemplate(props: DisplayTemplateProps) {
-  let text: Array<React.ReactNode> = [];
-  const regex = /{{(\s+)?(.+?)(\s+)?}}/gm;
-  let m;
-  let last = 0;
-  while ((m = regex.exec(props.v)) !== null) {
-    if (m.index === regex.lastIndex) {
-      regex.lastIndex++;
-    }
-    text.push(<span key={text.length}>{props.v.slice(last, m.index)}</span>);
-    last = m.index + m[0].length;
-    text.push(<Tag key={text.length} variant="subtle" colorScheme="cyan">{m[2]}</Tag>);
-  }
-  text.push(<span key={text.length}>{props.v.slice(last, props.v.length)}</span>);
-  return (<>
-    <span style={{ whiteSpace: "pre" }}>{text}</span>
-  </>);
-}
-
 interface NewRedirectFromProps { }
 interface NewRedirectFromState {
   FromURI: string;
@@ -129,7 +108,7 @@ interface NewRedirectFromState {
   HeadersTemplate: string;
   BodyTemplate: string;
 
-  advancedMode: boolean;
+  isAdvanced: boolean;
   step: number;
 }
 class NewRedirectFrom extends React.Component<NewRedirectFromProps, NewRedirectFromState> {
@@ -143,7 +122,7 @@ class NewRedirectFrom extends React.Component<NewRedirectFromProps, NewRedirectF
       MethodTemplate: ifSaved('MethodTemplate', ''),
       HeadersTemplate: ifSaved('HeadersTemplate', ''),
       BodyTemplate: ifSaved('BodyTemplate', ''),
-      advancedMode: ifSaved('advancedMode', false),
+      isAdvanced: ifSaved('isAdvanced', false),
       step: 0,
     };
   }
@@ -162,8 +141,28 @@ class NewRedirectFrom extends React.Component<NewRedirectFromProps, NewRedirectF
     e.preventDefault();
   }
   onSubmit(e: any) {
-    localStorage.removeItem("NewRedirectFrom");
-    console.log(this.state);
+    let r = new Redirect();
+    r.FromURI = this.state.FromURI;
+    r.RedirectAfter = this.state.RedirectAfter;
+    if (this.state.isAdvanced) {
+      r.URLTemplate = this.state.URLTemplate;
+      r.MethodTemplate = this.state.MethodTemplate;
+      r.HeadersTemplate = this.state.HeadersTemplate;
+      r.BodyTemplate = this.state.BodyTemplate;
+    } else {
+      r.ToURL = this.state.ToURL;
+    }
+    let p = r.createNew();
+    p.then((err) => {
+      if (err === null) {
+        localStorage.removeItem("NewRedirectFrom");
+        localStorage.setItem("page", "index");
+        location.reload();
+      } else {
+        // FIXIT show error modal or snick-bar
+        alert(err);
+      }
+    });
     e.preventDefault();
   }
   nextStep() {
@@ -199,7 +198,7 @@ class NewRedirectFrom extends React.Component<NewRedirectFromProps, NewRedirectF
           </TabPanel>
           <TabPanel>
             <Box w="100%">
-              <SwitchControl name="advancedMode" checked={this.state.advancedMode}
+              <SwitchControl name="isAdvanced" checked={this.state.isAdvanced}
                 title="Advanced mode" doc={<>
                   Toggle advanced mode.
                   <OrderedList>
@@ -209,7 +208,7 @@ class NewRedirectFrom extends React.Component<NewRedirectFromProps, NewRedirectF
                 </>}
                 on={(name, e) => this.onSwitch(name, e)} />
               <Divider mb="2rem" />
-              {this.state.advancedMode ? <>
+              {this.state.isAdvanced ? <>
                 <LineControl name="URLTemplate" value={this.state.URLTemplate}
                   title="URL template" placeholder="https://hooks.slack.com/services/T{{secrets.TID}}/B{{secrets.BID}}" doc="Template for URL"
                   on={(name, e) => this.onChange(name, e)} />
@@ -235,23 +234,7 @@ class NewRedirectFrom extends React.Component<NewRedirectFromProps, NewRedirectF
           </TabPanel>
           <TabPanel>
             <Box w="100%">
-              <Heading as="h4" size="md">FromURI:</Heading>
-              <DisplayTemplate v={this.state.FromURI} />
-              <Heading as="h4" size="md">RedirectAfter:</Heading>
-              <DisplayTemplate v={this.state.RedirectAfter} />
-              {this.state.advancedMode ? <>
-                <Heading as="h4" size="md">URLTemplate:</Heading>
-                <DisplayTemplate v={this.state.URLTemplate} />
-                <Heading as="h4" size="md">MethodTemplate:</Heading>
-                <DisplayTemplate v={this.state.MethodTemplate} />
-                <Heading as="h4" size="md">HeadersTemplate:</Heading>
-                <DisplayTemplate v={this.state.HeadersTemplate} />
-                <Heading as="h4" size="md">BodyTemplate:</Heading>
-                <DisplayTemplate v={this.state.BodyTemplate} />
-              </> : <>
-                <Heading as="h4" size="md">ToURL:</Heading>
-                <DisplayTemplate v={this.state.ToURL} />
-              </>}
+              <RedirectUI redirect={this.state} />
               <Divider my="1rem" />
               <ButtonGroup spacing="3">
                 <Button onClick={e => this.backStep()}>Previous Step</Button>

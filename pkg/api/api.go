@@ -8,7 +8,7 @@ import (
 )
 
 func ConnectAPI(ginServer *gin.Engine, fs *storage.FireStoreStorage) {
-	ginServer.GET("/api/new", handlers.MakeNewRedirectHandler(fs))
+	ginServer.POST("/api/new", handlers.MakeNewRedirectHandler(fs))
 	ginServer.GET("/api/list", handlers.MakeListRedirectsHandler(fs))
 	ginServer.POST("/dev/print", handlers.MakeEchoHandler(fs))
 	ginServer.StaticFile("/", "./assets/public/index.html")

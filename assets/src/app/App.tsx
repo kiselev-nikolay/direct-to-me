@@ -7,6 +7,7 @@ import {
 
 import Navigation from './Navigation';
 import Pages from './Pages';
+import pages from './pagesIndex';
 
 interface AppProps { }
 interface AppState {
@@ -15,7 +16,9 @@ interface AppState {
 class App extends React.Component<AppProps, AppState> {
   constructor(props: AppProps) {
     super(props);
-    this.state = { page: 0 };
+    this.state = {
+      page: pages.indexOf(localStorage.getItem("page") || "index")
+    };
   }
   setPage(page: number) {
     this.setState({ page: page });
