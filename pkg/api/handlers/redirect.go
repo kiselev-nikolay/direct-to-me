@@ -20,6 +20,9 @@ func IsSocialReferer(h string) bool {
 		return false
 	}
 	domain := strings.Split(v.Hostname(), ".")
+	if len(domain) < 2 {
+		return false
+	}
 	switch strings.ToLower(domain[len(domain)-2]) {
 	case "facebook", "instagram", "youtube", "twitter", "tiktok", "pinterest", "snapchat", "whatsapp":
 		return true
