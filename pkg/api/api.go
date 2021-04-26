@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kiselev-nikolay/direct-to-me/pkg/api/handlers"
 	"github.com/kiselev-nikolay/direct-to-me/pkg/redirectstat"
-	"github.com/kiselev-nikolay/direct-to-me/pkg/server"
 	"github.com/kiselev-nikolay/direct-to-me/pkg/storage"
 )
 
@@ -18,5 +17,4 @@ func ConnectAPI(ginServer *gin.Engine, strg storage.Storage, redag *redirectstat
 	redirectHandler := handlers.MakeRedirectHandler(strg)
 	ginServer.NoMethod(redirectHandler)
 	ginServer.NoRoute(redirectHandler)
-	server.RunServer(ginServer)
 }
