@@ -9,7 +9,7 @@ type Click struct {
 	Social uint64
 }
 
-type Error struct {
+type Fail struct {
 	RedirectKey string
 
 	NotFound                   uint64
@@ -18,21 +18,24 @@ type Error struct {
 	ClientContentProcessFailed uint64
 }
 
-type StatChannel struct {
-	ClicksChannel chan Click
-	ErrorsChannel chan Error
+type StatChannels struct {
+	ClicksChannel chan *Click
+	FailsChannel  chan *Fail
 }
 
-var StatChannelInstance *StatChannel
+var StatChannelsInstance *StatChannels
 var lock = &sync.Mutex{}
 
-func GetStatChannel() *StatChannel {
-	if StatChannelInstance == nil {
+func GetStatChannels() *StatChannels {
+	if StatChannelsInstance == nil {
 		lock.Lock()
-		if StatChannelInstance == nil {
-			StatChannelInstance = &StatChannel{}
+		if StatChannelsInstance == nil {
+			StatChannelsInstance = &StatChannels{
+				ClicksChannel: make(chan *Click, 1024),
+				FailsChannel:  make(chan *Fail, 1024),
+			}
 		}
 		lock.Unlock()
 	}
-	return StatChannelInstance
+	return StatChannelsInstance
 }
