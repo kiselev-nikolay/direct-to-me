@@ -1,7 +1,6 @@
 package server
 
 import (
-	"flag"
 	"net/http"
 	"sync"
 
@@ -23,17 +22,14 @@ func GetServer() *gin.Engine {
 	return r
 }
 
-func RunServer(r *gin.Engine) {
+func RunServer(r *gin.Engine, host string) {
 	var serverWaitGroup sync.WaitGroup
-	var production bool
-	flag.BoolVar(&production, "production", false, "Enables production mode, HTTPS with autoTLS.")
-	flag.Parse()
-	if production {
+	if host != "" {
 		gin.SetMode(gin.ReleaseMode)
 		serverWaitGroup.Add(1)
 		go func() {
 			defer serverWaitGroup.Done()
-			autotls.Run(r, "direct-to-me.com")
+			autotls.Run(r, host)
 		}()
 	}
 	serverWaitGroup.Add(1)

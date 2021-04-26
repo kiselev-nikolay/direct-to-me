@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 
 	"github.com/kiselev-nikolay/direct-to-me/pkg/api"
@@ -11,6 +12,9 @@ import (
 )
 
 func main() {
+	var host string
+	flag.StringVar(&host, "host", "", "Enables HTTPS with autoTLS for host.")
+	flag.Parse()
 	strg := &storage.BitcaskStorage{}
 	err := strg.Connect()
 	if err != nil {
@@ -22,5 +26,5 @@ func main() {
 	redag := &redirectstat.RedirectAggregation{}
 	redag.Worker(ctx)
 	api.ConnectAPI(ginServer, strg, redag)
-	server.RunServer(ginServer)
+	server.RunServer(ginServer, host)
 }
