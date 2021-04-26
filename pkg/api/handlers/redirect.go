@@ -14,7 +14,7 @@ import (
 
 func MakeRedirectHandler(strg storage.Storage) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		requestURI := strings.Trim(ctx.Request.RequestURI, "/")
+		requestURI := strings.Trim(ctx.Request.URL.Path, "/")
 		redirect, err := strg.GetRedirect(requestURI)
 		if err != nil {
 			if storage.IsNotFoundError(err) {

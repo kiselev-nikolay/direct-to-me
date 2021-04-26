@@ -4,19 +4,25 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"log"
 
 	"github.com/prologic/bitcask"
 )
 
 type BitcaskStorage struct {
-	db *bitcask.Bitcask
+	db       *bitcask.Bitcask
+	SavePath string
 }
 
 var _ Storage = (*BitcaskStorage)(nil)
 
+func (bs *BitcaskStorage) GetDB() *bitcask.Bitcask {
+	return bs.db
+}
 func (bs *BitcaskStorage) Connect() error {
-	db, err := bitcask.Open("./bitcaskdb")
+	if bs.SavePath == "" {
+		bs.SavePath = "./bitcaskdb"
+	}
+	db, err := bitcask.Open(bs.SavePath)
 	if err != nil {
 		return err
 	}
@@ -28,17 +34,17 @@ func (bs *BitcaskStorage) Quit() {
 	bs.db.Close()
 }
 func (bs *BitcaskStorage) setNoIndex(collection string, key string, value interface{}) error {
-	record := []byte{}
-	encoder := gob.NewEncoder(bytes.NewBuffer(record))
+	record := bytes.NewBuffer([]byte{})
+	encoder := gob.NewEncoder(record)
 	err := encoder.Encode(value)
 	if err != nil {
 		err = fmt.Errorf("bitcask set %v:%v->%v encoder error: %v", collection, key, value, err)
 		return err
 	}
-	err = bs.db.Put([]byte(collection+":"+key), record)
+	err = bs.db.Put([]byte(collection+":"+key), record.Bytes())
 	return err
 }
-func (bs *BitcaskStorage) set(collection string, key string, value interface{}) error {
+func (bs *BitcaskStorage) Set(collection string, key string, value interface{}) error {
 	err := bs.addKey(collection, key)
 	if err != nil {
 		return err
@@ -49,7 +55,7 @@ func (bs *BitcaskStorage) set(collection string, key string, value interface{}) 
 func IsNotFoundError(err error) bool {
 	return err == bitcask.ErrKeyNotFound
 }
-func (bs *BitcaskStorage) get(collection string, key string, value interface{}) error {
+func (bs *BitcaskStorage) Get(collection string, key string, value interface{}) error {
 	record, err := bs.db.Get([]byte(collection + ":" + key))
 	if err != nil {
 		if err == bitcask.ErrKeyNotFound {
@@ -58,7 +64,6 @@ func (bs *BitcaskStorage) get(collection string, key string, value interface{}) 
 		err = fmt.Errorf("bitcask get <-%v:%v read error: %v", collection, key, err)
 		return err
 	}
-	log.Println(record)
 	decoder := gob.NewDecoder(bytes.NewBuffer(record))
 	err = decoder.Decode(value)
 	if err != nil {
@@ -67,19 +72,19 @@ func (bs *BitcaskStorage) get(collection string, key string, value interface{}) 
 	}
 	return err
 }
-func (bs *BitcaskStorage) delete(collection string, key string) error {
+func (bs *BitcaskStorage) Delete(collection string, key string) error {
 	bs.deleteKey(collection, key)
 	err := bs.db.Delete([]byte(collection + ":" + key))
 	return err
 }
-func (bs *BitcaskStorage) listKeys(collection string) ([]string, error) {
+func (bs *BitcaskStorage) ListKeys(collection string) ([]string, error) {
 	keys := make([]string, 0)
-	err := bs.get("index", collection, &keys)
+	err := bs.Get("index", collection, &keys)
 	return keys, err
 }
 func (bs *BitcaskStorage) addKey(collection string, key string) error {
 	keys := make([]string, 0)
-	err := bs.get("index", collection, &keys)
+	err := bs.Get("index", collection, &keys)
 	if err != nil && !IsNotFoundError(err) {
 		return err
 	}
@@ -90,7 +95,7 @@ func (bs *BitcaskStorage) addKey(collection string, key string) error {
 func (bs *BitcaskStorage) deleteKey(collection string, key string) error {
 	keys := make([]string, 0)
 	newKeys := make([]string, 0)
-	err := bs.get("index", collection, &keys)
+	err := bs.Get("index", collection, &keys)
 	if err != nil {
 		return err
 	}
@@ -103,30 +108,30 @@ func (bs *BitcaskStorage) deleteKey(collection string, key string) error {
 	return err
 }
 func (bs *BitcaskStorage) SetRedirect(key string, value *Redirect) error {
-	err := bs.set("redirects", key, value)
+	err := bs.Set("redirects", key, value)
 	return err
 }
 func (bs *BitcaskStorage) GetRedirect(key string) (*Redirect, error) {
 	redirect := &Redirect{}
-	err := bs.get("redirects", key, redirect)
+	err := bs.Get("redirects", key, redirect)
 	if err != nil {
 		return nil, err
 	}
 	return redirect, nil
 }
 func (bs *BitcaskStorage) DeleteRedirect(key string) error {
-	err := bs.delete("redirects", key)
+	err := bs.Delete("redirects", key)
 	return err
 }
 func (bs *BitcaskStorage) ListRedirects() ([]*Redirect, error) {
 	redirects := make([]*Redirect, 0)
-	redirectKeys, err := bs.listKeys("redirects")
+	redirectKeys, err := bs.ListKeys("redirects")
 	if err != nil {
 		return nil, err
 	}
 	for _, key := range redirectKeys {
 		redirect := &Redirect{}
-		bs.get("redirects", key, redirect)
+		bs.Get("redirects", key, redirect)
 		redirects = append(redirects, redirect)
 	}
 	return redirects, nil
