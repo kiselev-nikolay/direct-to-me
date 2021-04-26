@@ -99,3 +99,23 @@ func TestIndexes(t *testing.T) {
 	require.NoError(err)
 	require.Empty(index)
 }
+
+func TestIndexBug(t *testing.T) {
+	// See: https://github.com/kiselev-nikolay/direct-to-me/issues/7
+	require := require.New(t)
+	strg := &storage.BitcaskStorage{
+		SavePath: SavePath,
+	}
+	strg.Connect()
+	defer func() {
+		strg.Quit()
+		resetDB()
+	}()
+
+	value := ExampleItem{Key: "key1", Field: "test", Value: 12, IsActive: true}
+	strg.Set(ExampleItemCN, "key1", &value)
+	strg.Set(ExampleItemCN, "key1", &value)
+	v, err := strg.ListKeys(ExampleItemCN)
+	require.NoError(err)
+	require.Len(v, 1)
+}

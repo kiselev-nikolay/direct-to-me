@@ -88,6 +88,11 @@ func (bs *BitcaskStorage) addKey(collection string, key string) error {
 	if err != nil && !IsNotFoundError(err) {
 		return err
 	}
+	for _, i := range keys {
+		if i == key {
+			return nil
+		}
+	}
 	keys = append(keys, key)
 	err = bs.setNoIndex("index", collection, keys)
 	return err
