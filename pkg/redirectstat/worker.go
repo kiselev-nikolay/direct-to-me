@@ -43,6 +43,7 @@ func (rs *RedirectAggregation) clickWaiter(ctx context.Context, ch chan *Click) 
 				rs.mutex.Unlock()
 				continue
 			}
+			rs.mutex.Unlock()
 			atomic.AddUint64(&v.Direct, click.Direct)
 			atomic.AddUint64(&v.Social, click.Social)
 		}
