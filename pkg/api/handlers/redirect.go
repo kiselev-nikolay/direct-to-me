@@ -12,10 +12,10 @@ import (
 	template_process "github.com/kiselev-nikolay/direct-to-me/pkg/tools/template/process"
 )
 
-func MakeRedirectHandler(fs *storage.FireStoreStorage) func(ctx *gin.Context) {
+func MakeRedirectHandler(strg storage.Storage) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		requestURI := strings.Trim(ctx.Request.RequestURI, "/")
-		redirect, err := fs.GetRedirect(requestURI)
+		requestURI := strings.Trim(ctx.Request.URL.Path, "/")
+		redirect, err := strg.GetRedirect(requestURI)
 		if err != nil {
 			if storage.IsNotFoundError(err) {
 				ctx.JSON(404, gin.H{
@@ -23,6 +23,7 @@ func MakeRedirectHandler(fs *storage.FireStoreStorage) func(ctx *gin.Context) {
 				})
 				return
 			}
+			log.Println(err)
 			ctx.JSON(500, gin.H{
 				"status": "database unreachable",
 			})
@@ -50,6 +51,7 @@ func MakeRedirectHandler(fs *storage.FireStoreStorage) func(ctx *gin.Context) {
 		if redirect.ToURL != "" {
 			r, err := json.Marshal(data)
 			if err != nil {
+				log.Println(err)
 				ctx.JSON(400, gin.H{
 					"status": "failed to process content",
 				})
@@ -59,7 +61,7 @@ func MakeRedirectHandler(fs *storage.FireStoreStorage) func(ctx *gin.Context) {
 		} else {
 			req, err := template_process.ProcessTemplate(redirect, &data)
 			if err != nil {
-				log.Print(err)
+				log.Println(err)
 				ctx.JSON(400, gin.H{
 					"status": "failed to process content",
 				})
@@ -69,7 +71,7 @@ func MakeRedirectHandler(fs *storage.FireStoreStorage) func(ctx *gin.Context) {
 				HTTPClient := http.Client{}
 				_, err := HTTPClient.Do(req)
 				if err != nil {
-					log.Print(err)
+					log.Println(err)
 				}
 			}()
 		}
