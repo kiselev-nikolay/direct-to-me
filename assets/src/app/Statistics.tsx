@@ -3,6 +3,10 @@ import React from 'react';
 import Chart from 'react-apexcharts';
 
 import {
+  ArrowBackIcon,
+  SmallAddIcon,
+} from '@chakra-ui/icons';
+import {
   Box,
   Divider,
   Flex,
@@ -15,6 +19,7 @@ import {
   Tag,
   Tbody,
   Td,
+  Text,
   Tr,
 } from '@chakra-ui/react';
 
@@ -28,35 +33,48 @@ let stats: Map<string, APIStats> = new Map<string, APIStats>();
 
 interface StatisticsProps { }
 interface StatisticsState {
+  loading: boolean;
   stats: Map<string, APIStats>;
 }
 
 export default class Statistics extends React.Component<StatisticsProps, StatisticsState> {
   constructor(props: StatisticsProps) {
     super(props);
-    this.state = { stats: stats };
+    this.state = { loading: true, stats: stats };
   }
   componentDidMount() {
     if (stats.size === 0) {
       setTimeout(() => {
-        GetStats().then((s: Map<string, APIStats>) => { stats = s; this.setState({ stats: s }); });
+        GetStats().then((s: Map<string, APIStats>) => { stats = s; this.setState({ loading: false, stats: s }); });
       }, 500);
     } else {
-      this.setState({ stats: stats });
+      this.setState({ loading: false, stats: stats });
     }
   }
   render() {
     return (<>
-      {stats.size === 0 &&
+      {this.state.loading &&
         <Stack>
+          <Skeleton height="40px" />
           <Skeleton height="20px" />
+          <Skeleton height="20px" width="90%" />
           <Skeleton height="20px" />
+          <Skeleton height="20px" width="85%" />
+          <Skeleton height="20px" width="95%" />
           <Skeleton height="20px" />
         </Stack>
       }
-      <Stack>
-        <Stats data={this.state.stats} />
-      </Stack>
+      {!this.state.loading && stats.size === 0 && <Box m="2rem">
+        <Heading mb="1rem">Empty yet!</Heading>
+        <Text><ArrowBackIcon /> Try creating a new redirect in the "New redirect" section of the left navigation.</Text>
+        <Text><SmallAddIcon /> Already setup redirects? See it in the "List redirects" section of the left navigation?</Text>
+        <Text><SmallAddIcon /> Yes, great! Now visit your redirect to get your first statistics!</Text>
+      </Box>}
+      {!this.state.loading && stats.size !== 0 &&
+        <Stack>
+          <Stats data={this.state.stats} />
+        </Stack>
+      }
     </>);
   }
 }
