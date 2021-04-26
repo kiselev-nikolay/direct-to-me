@@ -39,11 +39,13 @@ export default class ListRedirects extends React.Component<ListRedirectsProps, L
           <Skeleton height="20px" />
         </Stack>
       }
-      <Stack>
-        {redirects.map((x, i) => <Box key={i} borderWidth="1px" borderRadius="lg" p="1rem" overflow="hidden">
-          <RedirectUI redirect={x} />
-        </Box>)}
-      </Stack>
+      {redirects.length !== 0 &&
+        <Stack>
+          {redirects.map((x, i) => <Box key={i} borderWidth="1px" borderRadius="lg" p="1rem" overflow="hidden">
+            <RedirectUI redirect={x} />
+          </Box>)}
+        </Stack>
+      }
     </>);
   }
 }
