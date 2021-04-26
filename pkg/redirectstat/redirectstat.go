@@ -3,19 +3,19 @@ package redirectstat
 import "sync"
 
 type Click struct {
-	RedirectKey string
+	RedirectKey string `json:"-"`
 
-	Direct uint64
-	Social uint64
+	Direct uint64 `json:"direct"`
+	Social uint64 `json:"social"`
 }
 
 type Fail struct {
-	RedirectKey string
+	RedirectKey string `json:"-"`
 
-	NotFound                   uint64
-	DatabaseUnreachable        uint64
-	TemplateProcessFailed      uint64
-	ClientContentProcessFailed uint64
+	NotFound                   uint64 `json:"notFound"`
+	DatabaseUnreachable        uint64 `json:"databaseUnreachable"`
+	TemplateProcessFailed      uint64 `json:"templateProcessFailed"`
+	ClientContentProcessFailed uint64 `json:"clientContentProcessFailed"`
 }
 
 type StatChannels struct {
