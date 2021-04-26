@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 	"time"
@@ -12,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const SavePath = "C:/Users/Gain/Desktop/Coding/github.com/kiselev-nikolay/direct-to-me/tests/bitcaskdb"
+var SavePath, _ = filepath.Abs(os.TempDir() + "/bitcaskdb")
 
 type ExampleItem struct {
 	Key      string
