@@ -1,4 +1,5 @@
 import axios from 'axios';
+import token from './token';
 
 export interface APIClick {
   direct: number;
@@ -18,7 +19,11 @@ export interface APIStats {
 }
 
 export default async function GetStats() {
-  let res = await axios.get("/api/stats");
+  let res = await axios.get("/api/stats", {
+    headers: {
+      'Authorization': `Bearer ${token}` 
+    }
+  });
   let data = new Map<string, APIStats>();
   for (const [key, value] of Object.entries(res.data.clicks)) {
     if (!data.has(key)) {

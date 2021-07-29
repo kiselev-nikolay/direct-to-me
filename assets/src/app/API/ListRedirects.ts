@@ -1,4 +1,6 @@
 import axios from 'axios';
+import token from './token';
+
 
 interface APIRedirect {
   from: string;
@@ -39,6 +41,10 @@ export class Redirect {
 }
 
 export default async function GetRedirects() {
-  let res = await axios.get("/api/list");
+  let res = await axios.get("/api/list", {
+    headers: {
+      'Authorization': `Bearer ${token}` 
+    }
+  });
   return res.data.redirects.map((i: APIRedirect) => { let r = new Redirect(); r.deserialize(i); return r; });
 }
