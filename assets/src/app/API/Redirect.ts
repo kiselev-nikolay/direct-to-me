@@ -1,4 +1,5 @@
 import axios from 'axios';
+import token from './token';
 
 interface APIParamsNewRedirect {
   from: string;
@@ -46,7 +47,11 @@ export class Redirect {
   }
 
   async createNew() {
-    let resp = await axios.post("/api/new", this.serialize());
+    let resp = await axios.post("/api/new", this.serialize(), {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     if (resp.status === 200) {
       return null;
     }

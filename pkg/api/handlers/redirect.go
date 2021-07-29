@@ -14,13 +14,15 @@ import (
 	template_process "github.com/kiselev-nikolay/direct-to-me/pkg/tools/template/process"
 )
 
+const NonTLDLen = 2
+
 func IsSocialReferer(h string) bool {
 	v, err := url.Parse(h)
 	if err != nil {
 		return false
 	}
 	domain := strings.Split(v.Hostname(), ".")
-	if len(domain) < 2 {
+	if len(domain) < NonTLDLen {
 		return false
 	}
 	switch strings.ToLower(domain[len(domain)-2]) {
@@ -38,14 +40,14 @@ func MakeRedirectHandler(strg storage.Storage) func(ctx *gin.Context) {
 		if err != nil {
 			if storage.IsNotFoundError(err) {
 				statCh.FailsChannel <- &rs.Fail{RedirectKey: requestURI, NotFound: 1}
-				ctx.JSON(404, gin.H{
+				ctx.JSON(http.StatusNotFound, gin.H{
 					"status": "not found",
 				})
 				return
 			}
 			statCh.FailsChannel <- &rs.Fail{RedirectKey: requestURI, DatabaseUnreachable: 1}
 			log.Println(err)
-			ctx.JSON(500, gin.H{
+			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"status": "database unreachable",
 			})
 			return
@@ -74,25 +76,32 @@ func MakeRedirectHandler(strg storage.Storage) func(ctx *gin.Context) {
 			if err != nil {
 				statCh.FailsChannel <- &rs.Fail{RedirectKey: requestURI, ClientContentProcessFailed: 1}
 				log.Println(err)
-				ctx.JSON(400, gin.H{
+				ctx.JSON(http.StatusBadRequest, gin.H{
 					"status": "failed to process content",
 				})
 				return
 			}
-			go http.Post(redirect.ToURL, "application/json", bytes.NewBuffer(r))
+			go func() {
+				res, err := http.Post(redirect.ToURL, "application/json", bytes.NewBuffer(r))
+				res.Body.Close()
+				if err != nil {
+					log.Println(err)
+				}
+			}()
 		} else {
 			req, err := template_process.ProcessTemplate(redirect, &data)
 			if err != nil {
 				statCh.FailsChannel <- &rs.Fail{RedirectKey: requestURI, TemplateProcessFailed: 1}
 				log.Println(err)
-				ctx.JSON(400, gin.H{
+				ctx.JSON(http.StatusBadRequest, gin.H{
 					"status": "failed to process content",
 				})
 				return
 			}
 			go func() {
 				HTTPClient := http.Client{}
-				_, err := HTTPClient.Do(req)
+				res, err := HTTPClient.Do(req)
+				res.Body.Close()
 				if err != nil {
 					statCh.FailsChannel <- &rs.Fail{RedirectKey: requestURI, TemplateProcessFailed: 1}
 					log.Println(err)
@@ -104,6 +113,6 @@ func MakeRedirectHandler(strg storage.Storage) func(ctx *gin.Context) {
 		} else {
 			statCh.ClicksChannel <- &rs.Click{RedirectKey: requestURI, Direct: 1}
 		}
-		ctx.Redirect(303, redirect.RedirectAfter)
+		ctx.Redirect(http.StatusSeeOther, redirect.RedirectAfter)
 	}
 }
