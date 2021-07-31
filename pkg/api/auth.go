@@ -6,8 +6,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	limit "github.com/yangxikun/gin-limit-by-key"
+
+	"golang.org/x/time/rate"
 )
 
 type authHeader struct {
@@ -55,4 +59,14 @@ func authBundle(authKey string) func(c *gin.Context) {
 		bundleReader := strings.NewReader(bundle)
 		c.DataFromReader(http.StatusOK, int64(len(bundle)), "text/javascript", bundleReader, nil)
 	}
+}
+
+func GetLimiter() gin.HandlerFunc {
+	return limit.NewRateLimiter(func(c *gin.Context) string {
+		return c.ClientIP()
+	}, func(c *gin.Context) (*rate.Limiter, time.Duration) {
+		return rate.NewLimiter(rate.Every(time.Minute), 30), 15 * time.Minute
+	}, func(c *gin.Context) {
+		c.AbortWithStatus(429)
+	})
 }

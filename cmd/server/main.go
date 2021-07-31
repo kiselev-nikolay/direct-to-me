@@ -27,6 +27,7 @@ func main() {
 			log.Fatal(err)
 		}
 		authKey = base64.RawStdEncoding.EncodeToString(buf)
+		log.Println("Defaulting auth key to", authKey)
 	}
 	strg := &storage.BitcaskStorage{}
 	err := strg.Connect()
