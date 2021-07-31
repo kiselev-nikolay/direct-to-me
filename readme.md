@@ -10,10 +10,11 @@ It's a data redirection program. You create a link inside the program `example.c
 
 ```shell
 docker pull ghcr.io/kiselev-nikolay/direct-to-me/direct-to-me:latest
-docker run --name direct-to-me -p 8080:8080 ghcr.io/kiselev-nikolay/direct-to-me/direct-to-me:latest
+docker run --name direct-to-me -p 8080:8080 ghcr.io/kiselev-nikolay/direct-to-me/direct-to-me:latest \
+    /srv/app/main -authkey "my-password"
 ```
 
-Now check this out! Go to [localhost:8080](http://localhost:8080)
+Now check this out! Go to [localhost:8080/control](http://localhost:8080/control) (Username: `staff`, Password: `my-password`)
 
 ## Screenshots 😍
 

@@ -35,7 +35,7 @@ let Navigation = (props: NavigationProps) => {
   return (
     <Center>
       <Box m="2rem" borderWidth="1px" borderRadius="lg" overflow="hidden">
-        <Image mx="25%" my="1rem" w="50%" src="/static/logo.png" alt="" />
+        <Image mx="25%" my="1rem" w="50%" src="static/logo.png" alt="" />
         <Box m="1rem" flex="1" textAlign="left">
           <Heading mx=".5rem" as="h4" size="md">Direct to me</Heading>
           <Divider my=".5rem" />
