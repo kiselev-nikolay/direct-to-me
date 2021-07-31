@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	templateprocess "github.com/kiselev-nikolay/direct-to-me/pkg/tools/template/process"
+
 	"github.com/gin-gonic/gin"
 	"github.com/kiselev-nikolay/direct-to-me/pkg/storage"
 )
@@ -18,9 +20,13 @@ func MakeNewRedirectHandler(strg storage.Storage) func(ctx *gin.Context) {
 			})
 			return
 		}
-		if redirect.ToURL != "" {
-			// FIXIT validate template
-			log.Print("FIXIT validate template")
+		if redirect.ToURL == "" {
+			if err := templateprocess.ValidateRedirectTemplate(&redirect, nil); err != nil {
+				ctx.JSON(http.StatusOK, gin.H{
+					"status": "invalid template: " + err.Error(),
+				})
+				return
+			}
 		}
 		err := strg.SetRedirect(redirect.FromURI, &redirect)
 		if err != nil {

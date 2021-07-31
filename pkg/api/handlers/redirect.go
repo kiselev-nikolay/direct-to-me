@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	rs "github.com/kiselev-nikolay/direct-to-me/pkg/redirectstat"
 	"github.com/kiselev-nikolay/direct-to-me/pkg/storage"
-	template_process "github.com/kiselev-nikolay/direct-to-me/pkg/tools/template/process"
+	templateprocess "github.com/kiselev-nikolay/direct-to-me/pkg/tools/template/process"
 )
 
 const NonTLDLen = 2
@@ -89,7 +89,7 @@ func MakeRedirectHandler(strg storage.Storage) func(ctx *gin.Context) {
 				}
 			}()
 		} else {
-			req, err := template_process.ProcessTemplate(redirect, &data)
+			req, err := templateprocess.ProcessTemplate(redirect, data)
 			if err != nil {
 				statCh.FailsChannel <- &rs.Fail{RedirectKey: requestURI, TemplateProcessFailed: 1}
 				log.Println(err)

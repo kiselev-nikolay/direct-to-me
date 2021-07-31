@@ -6,6 +6,7 @@ import {
   Button,
   ButtonGroup,
   Code,
+  createStandaloneToast,
   Divider,
   FormControl,
   FormLabel,
@@ -159,8 +160,14 @@ class NewRedirectFrom extends React.Component<NewRedirectFromProps, NewRedirectF
         localStorage.setItem("page", "index");
         location.reload();
       } else {
-        // FIXIT show error modal or snick-bar
-        alert(err);
+        let toast = createStandaloneToast();
+        toast({
+          title: "Failed to save",
+          description: err,
+          status: "error",
+          duration: 9000,
+          isClosable: true,
+        });
       }
     });
     e.preventDefault();

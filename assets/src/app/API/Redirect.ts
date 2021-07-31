@@ -53,7 +53,9 @@ export class Redirect {
       }
     });
     if (resp.status === 200) {
-      return null;
+      if (resp.data.status === "ok") {
+        return null;
+      }
     }
     return resp.data.status;
   }
